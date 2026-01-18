@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Foto;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class FotoController extends Controller {
     function __construct() {
@@ -11,11 +12,11 @@ class FotoController extends Controller {
     }
 
     public function index(): View {
-        
+        return view('foto.index');
     }
 
     public function create(): View {
-        
+        return view('foto.create');
     }
 
     public function store(Request $request): RedirectResponse {
@@ -23,11 +24,11 @@ class FotoController extends Controller {
     }
 
     public function show(Vacacion $vacacion): View {
-        
+        return view('foto.show');
     }
 
     public function edit(Vacacion $vacacion): View {
-        
+        return view('foto.show');
     }
 
     public function update(Request $request, Vacacion $vacacion): RedirectResponse {

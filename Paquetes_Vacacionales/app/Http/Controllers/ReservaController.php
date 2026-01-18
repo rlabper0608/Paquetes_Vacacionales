@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reserva;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ReservaController extends Controller {
     function __construct() {
@@ -11,11 +12,11 @@ class ReservaController extends Controller {
     }
 
     public function index(): View {
-        
+        return view('reserva.index');
     }
 
     public function create(): View {
-        
+        return view('reserva.create');
     }
 
     public function store(Request $request): RedirectResponse {
@@ -23,11 +24,11 @@ class ReservaController extends Controller {
     }
 
     public function show(Vacacion $vacacion): View {
-        
+        return view('create.show');
     }
 
     public function edit(Vacacion $vacacion): View {
-        
+        return view('create.edit');
     }
 
     public function update(Request $request, Vacacion $vacacion): RedirectResponse {

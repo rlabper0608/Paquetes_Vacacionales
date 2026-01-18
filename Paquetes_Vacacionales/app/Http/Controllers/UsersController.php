@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Users;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class UsersController extends Controller {
     function __construct() {
@@ -15,7 +16,7 @@ class UsersController extends Controller {
     }
 
     public function create(): View {
-        
+        return view('user.create');
     }
 
     public function store(Request $request): RedirectResponse {
@@ -23,11 +24,11 @@ class UsersController extends Controller {
     }
 
     public function show(Vacacion $vacacion): View {
-        
+        return view('user.show');
     }
 
     public function edit(Vacacion $vacacion): View {
-        
+        return view('user.edit');
     }
 
     public function update(Request $request, Vacacion $vacacion): RedirectResponse {

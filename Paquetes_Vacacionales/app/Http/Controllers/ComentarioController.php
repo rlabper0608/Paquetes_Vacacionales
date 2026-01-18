@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comentario;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ComentarioController extends Controller {
     function __construct() {
@@ -11,11 +12,11 @@ class ComentarioController extends Controller {
     }
 
     public function index(): View {
-        
+        return view('comentario.index');
     }
 
     public function create(): View {
-        
+        return view('comentario.create');
     }
 
     public function store(Request $request): RedirectResponse {
@@ -23,11 +24,11 @@ class ComentarioController extends Controller {
     }
 
     public function show(Vacacion $vacacion): View {
-        
+        return view('comentario.show');
     }
 
     public function edit(Vacacion $vacacion): View {
-        
+        return view('comentario.edit');
     }
 
     public function update(Request $request, Vacacion $vacacion): RedirectResponse {
