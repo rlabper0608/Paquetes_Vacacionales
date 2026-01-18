@@ -5,61 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\Users;
 use Illuminate\Http\Request;
 
-class UsersController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class UsersController extends Controller {
+    function __construct() {
+        // $this->middleware('verified')->except(['index', 'pelo', 'show']);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(): View {
+        return view('user.index');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(): View {
+        
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Users $users)
-    {
-        //
+    public function store(Request $request): RedirectResponse {
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Users $users)
-    {
-        //
+    public function show(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Users $users)
-    {
-        //
+    public function edit(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Users $users)
-    {
-        //
+    public function update(Request $request, Vacacion $vacacion): RedirectResponse {
+        
+    }
+
+    public function destroy(Vacacion $vacacion): RedirectResponse {
+        
     }
 }

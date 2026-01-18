@@ -5,61 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\Reserva;
 use Illuminate\Http\Request;
 
-class ReservaController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class ReservaController extends Controller {
+    function __construct() {
+        // $this->middleware('verified')->except(['index', 'pelo', 'show']);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(): View {
+        
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(): View {
+        
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Reserva $reserva)
-    {
-        //
+    public function store(Request $request): RedirectResponse {
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Reserva $reserva)
-    {
-        //
+    public function show(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Reserva $reserva)
-    {
-        //
+    public function edit(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Reserva $reserva)
-    {
-        //
+    public function update(Request $request, Vacacion $vacacion): RedirectResponse {
+        
+    }
+
+    public function destroy(Vacacion $vacacion): RedirectResponse {
+        
     }
 }

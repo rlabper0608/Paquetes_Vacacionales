@@ -2,64 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\VacacionCreateRequest;
 use App\Models\Vacacion;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
-class VacacionController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class VacacionController extends Controller {
+
+    function __construct() {
+        // $this->middleware('verified')->except(['index', 'pelo', 'show']);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(): View {
+        return view('vacacion.index');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(): View {
+        return view('vacacion.create');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Vacacion $vacacion)
-    {
-        //
+    public function store(VacacionCreateRequest $request): RedirectResponse {
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Vacacion $vacacion)
-    {
-        //
+    public function show(Vacacion $vacacion): View {
+        return view('vacacion.show');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Vacacion $vacacion)
-    {
-        //
+    public function edit(Vacacion $vacacion): View {
+        return view('vacacion.edit');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Vacacion $vacacion)
-    {
-        //
+    public function update(Request $request, Vacacion $vacacion): RedirectResponse {
+        
+    }
+
+    public function destroy(Vacacion $vacacion): RedirectResponse {
+        
     }
 }

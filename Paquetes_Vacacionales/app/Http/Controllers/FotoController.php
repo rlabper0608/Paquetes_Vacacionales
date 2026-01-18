@@ -5,61 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\Foto;
 use Illuminate\Http\Request;
 
-class FotoController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class FotoController extends Controller {
+    function __construct() {
+        // $this->middleware('verified')->except(['index', 'pelo', 'show']);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function index(): View {
+        
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function create(): View {
+        
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Foto $foto)
-    {
-        //
+    public function store(Request $request): RedirectResponse {
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Foto $foto)
-    {
-        //
+    public function show(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Foto $foto)
-    {
-        //
+    public function edit(Vacacion $vacacion): View {
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Foto $foto)
-    {
-        //
+    public function update(Request $request, Vacacion $vacacion): RedirectResponse {
+        
+    }
+
+    public function destroy(Vacacion $vacacion): RedirectResponse {
+        
     }
 }
