@@ -12,10 +12,10 @@ class Vacacion extends Model {
     protected $fillable = ['titulo', 'descripcion', 'precio', 'idtipo'];
 
     public function foto(): HasMany {
-        return $this->hasMany(Foto::class, 'idfoto');
+        return $this->hasMany(Foto::class, 'idvacacion');
     }
 
-    public function tipo(): BelongsTo {
+    public function tipo(): BelongsTo { 
         return $this->belongsTo(Tipo::class, 'idtipo');
     }
 

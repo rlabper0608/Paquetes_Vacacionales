@@ -51,7 +51,7 @@ class VacacionCreateRequest extends FormRequest  {
 
     public function rules(): array {
         return [
-            'titulo'        => 'required|unique|string|min:1|max:60',
+            'titulo'        => 'required|unique:vacacion,titulo|string|min:1|max:60',
             'descripcion'   => 'required|min:20',
             'precio'        => 'required|integer|min:1|max:9999',
             'idtipo'        => 'required|exists:tipo,id',

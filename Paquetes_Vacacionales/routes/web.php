@@ -14,16 +14,17 @@ Route::get('/', [MainController::class, 'main'])->name('main');
 Route::get('about', [MainController::class, 'about'])->name('about'); 
 Route::get('dashboard', [UserController::class, 'dashboard'])->name('dashboard'); 
 
-Route::resource('foto', FotoController::class);
+Route::resource('comentario', ComentarioController::class);
 Route::resource('reserva', ReservaController::class);
 Route::resource('vacacion', VacacionController::class);
 Route::resource('tipo', TipoController::class);
 Route::resource('user', UsersController::class);
 
+Route::get('vacacion/{id}/fotos', [FotoController::class, 'gestionFotos'])->name('vacacion.fotos');
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/home/edit', [HomeController::class, 'edit'])->name('home.edit');
 Route::put('/home', [HomeController::class, 'update'])->name('home.update');
 
-// Auth::routes(['verify'=> true]);
+// Auth::routes(['verify'=> true]); 
 Auth::routes();

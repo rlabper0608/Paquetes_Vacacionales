@@ -11,6 +11,6 @@ class Tipo extends Model {
     protected $fillable = ['nombre'];
 
     public function vacacion(): HasMany {
-        return $this->HasMany(Vacacion::class, 'idvacacion');
+        return $this->HasMany(Vacacion::class, 'idtipo');
     }
 }
