@@ -9,46 +9,53 @@ class VacacionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Obtenemos los IDs de los tipos para asignarlos correctamente
-        $playaId = DB::table('tipo')->where('nombre', 'Playa')->value('id');
-        $montanaId = DB::table('tipo')->where('nombre', 'Montaña')->value('id');
-        $culturalId = DB::table('tipo')->where('nombre', 'Cultural')->value('id');
+        // Obtenemos los IDs de los tipos para asignarlos por nombre
+        $tipos = DB::table('tipo')->pluck('id', 'nombre')->toArray();
 
-        $vacaciones = [
-            [
-                'titulo' => 'Escapada a las Islas Maldivas',
-                'descripcion' => 'Disfruta de aguas cristalinas y villas sobre el mar en un entorno paradisíaco único en el mundo.',
-                'precio' => 1250.50,
-                'idtipo' => $playaId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'titulo' => 'Senderismo por los Alpes Suizos',
-                'descripcion' => 'Rutas increíbles entre montañas nevadas y lagos alpinos. Incluye guía profesional y alojamiento en refugios.',
-                'precio' => 890.00,
-                'idtipo' => $montanaId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'titulo' => 'Tour Histórico por Roma y el Vaticano',
-                'descripcion' => 'Visita guiada al Coliseo, los Museos Vaticanos y la Capilla Sixtina. Incluye vuelos y hotel céntrico.',
-                'precio' => 650.75,
-                'idtipo' => $culturalId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'titulo' => 'Relax Total en la Costa del Sol',
-                'descripcion' => 'Una semana en hotel 5 estrellas frente al mar con todo incluido. Ideal para desconectar del estrés.',
-                'precio' => 540.00,
-                'idtipo' => $playaId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $destinos = [
+            ['titulo' => 'Maldivas Luxury', 'tipo' => 'Playa', 'precio' => 1500],
+            ['titulo' => 'Aventura en los Alpes', 'tipo' => 'Montaña', 'precio' => 850],
+            ['titulo' => 'Roma Histórica', 'tipo' => 'Cultural', 'precio' => 600],
+            ['titulo' => 'Safari en Kenia', 'tipo' => 'Aventura', 'precio' => 2100],
+            ['titulo' => 'Crucero por el Caribe', 'tipo' => 'Crucero', 'precio' => 1100],
+            ['titulo' => 'Luces de Tokio', 'tipo' => 'Ciudad', 'precio' => 1800],
+            ['titulo' => 'Ibiza Party & Relax', 'tipo' => 'Playa', 'precio' => 450],
+            ['titulo' => 'Esquí en Aspen', 'tipo' => 'Montaña', 'precio' => 2500],
+            ['titulo' => 'Atenas y las Islas', 'tipo' => 'Cultural', 'precio' => 900],
+            ['titulo' => 'Selva Amazónica', 'tipo' => 'Aventura', 'precio' => 1300],
+            ['titulo' => 'Fiordos Noruegos', 'tipo' => 'Crucero', 'precio' => 1600],
+            ['titulo' => 'Nueva York Express', 'tipo' => 'Ciudad', 'precio' => 1400],
+            ['titulo' => 'Bali Espiritual', 'tipo' => 'Playa', 'precio' => 950],
+            ['titulo' => 'Pirineos Mágicos', 'tipo' => 'Montaña', 'precio' => 300],
+            ['titulo' => 'Praga Bohemio', 'tipo' => 'Cultural', 'precio' => 400],
+            ['titulo' => 'Ruta 66 USA', 'tipo' => 'Aventura', 'precio' => 2200],
+            ['titulo' => 'Crucero Mediterráneo', 'tipo' => 'Crucero', 'precio' => 800],
+            ['titulo' => 'Londres Clásico', 'tipo' => 'Ciudad', 'precio' => 550],
+            ['titulo' => 'Caribe Dominicano', 'tipo' => 'Playa', 'precio' => 700],
+            ['titulo' => 'Andes Chilenos', 'tipo' => 'Montaña', 'precio' => 1200],
+            ['titulo' => 'Egipto y el Nilo', 'tipo' => 'Cultural', 'precio' => 1100],
+            ['titulo' => 'Desierto del Sahara', 'tipo' => 'Aventura', 'precio' => 750],
+            ['titulo' => 'Nilo en Faluca', 'tipo' => 'Crucero', 'precio' => 450],
+            ['titulo' => 'Berlín Alternativo', 'tipo' => 'Ciudad', 'precio' => 380],
+            ['titulo' => 'Costa Brava', 'tipo' => 'Playa', 'precio' => 250],
+            ['titulo' => 'Sierra Nevada', 'tipo' => 'Montaña', 'precio' => 180],
+            ['titulo' => 'París Romántico', 'tipo' => 'Cultural', 'precio' => 700],
+            ['titulo' => 'Gran Cañón Arizona', 'tipo' => 'Aventura', 'precio' => 900],
+            ['titulo' => 'Crucero por el Báltico', 'tipo' => 'Crucero', 'precio' => 1300],
+            ['titulo' => 'Sidney y la Ópera', 'tipo' => 'Ciudad', 'precio' => 2400],
+            ['titulo' => 'Islas Griegas', 'tipo' => 'Playa', 'precio' => 850],
+            ['titulo' => 'Everest Base Camp', 'tipo' => 'Aventura', 'precio' => 3500],
         ];
 
-        DB::table('vacacion')->insert($vacaciones);
+        foreach ($destinos as $destino) {
+            DB::table('vacacion')->insert([
+                'titulo'      => $destino['titulo'],
+                'descripcion' => 'Una experiencia increíble en ' . $destino['titulo'] . '. Disfruta de paisajes únicos, cultura local y la mejor gastronomía. Este paquete incluye guía y traslados.',
+                'precio'      => $destino['precio'],
+                'idtipo'      => $tipos[$destino['tipo']] ?? array_rand($tipos),
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ]);
+        }
     }
 }

@@ -18,12 +18,96 @@ use Illuminate\View\View;
 class VacacionController extends Controller {
 
     function __construct() {
-        // $this->middleware('verified')->except(['index', 'pelo', 'show']);
+        $this->middleware('verified')->except(['index', 'show']);
     }
 
-    public function index(): View {
-        $vacaciones = Vacacion::with(['tipo', 'foto'])->paginate(6);
-        return view('vacacion.index', ['vacaciones'=>$vacaciones]);
+    function getField (?string $str): string {
+        $values = [
+            1 => 'vacacion.id',
+            2 => 'vacacion.precio', 
+            3 => 'tipo.nombre', 
+        ];
+        return $this->getParam($str, $values);
+    }
+
+    function getOrder (string|null $str): string {
+        $values = [
+            1 => 'asc',
+            2 => 'desc'
+        ];
+
+        return $this->getParam($str, $values);
+    }
+
+    function getParam(?string $str, array $values): string {
+        $result = $values[1];
+
+        if(isset($values[$str])) {
+            $result = $values[$str];
+        }
+        return $result;
+    }
+
+    public function index(Request $request): View {
+        $vacaciones = Vacacion::with(['tipo', 'foto']);
+        
+        $field = $this->getField($request->field);
+        $order = $this->getOrder($request->order);
+        $idtipo = $request->idtipo;
+        $desde = $request->desde;
+        $hasta = $request->hasta;
+        $q = $request->q;
+
+            //Construir la consulta paso a paso
+            $query = Vacacion::query();
+            
+            //Le unimos la tabla pelo para poder acceder a su nombre
+            $query ->join('tipo','vacacion.idtipo', '=', 'tipo.id');
+            
+            //Reemplazo el asterisco por los campos que quiero obtener
+            $query->select('vacacion.*','tipo.nombre');
+            
+            //Filtro idpelo
+            if($idtipo != null){
+                $query->where('idtipo','=',$idtipo);
+            }
+
+            // Filtro desde
+            if($desde != null){
+                $query->where('precio','>=',$desde);
+            }
+
+            // Filtro hasta
+            if($hasta != null){
+                $query->where('precio','<=',$hasta);
+            }
+
+            if($q != null) {
+                $query->where(function($subquery) use ($q) {
+                    $subquery
+                        ->where('vacacion.id', 'like', "%q%")
+                        ->orWhere('vacacion.titulo', 'like', '%' . $q . '%')
+                        ->orWhere('peinado.idpelo', 'like', '%' . $q . '%')
+                        ->orWhere('vacacion.description', 'like', '%' . $q . '%')
+                        ->orWhere('vacacion.precio', 'like', '%' . $q . '%')
+                        ->orWhere('tipo.nombre', 'like', '%' . $q . '%');
+                });
+            }
+        
+        
+        $query->orderBy($field,$order);
+        $vacaciones = $query->paginate(6)->withQueryString();
+        $tipos = Tipo::all();
+
+        return view('vacacion.index', [
+            'vacaciones'=>$vacaciones,
+            'tipos'=>$tipos,
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'q' => $q,
+            'hasPagination' => true,
+            'idtipo' => 'idtipo'
+            ]);
     }
 
     public function create(): View {
