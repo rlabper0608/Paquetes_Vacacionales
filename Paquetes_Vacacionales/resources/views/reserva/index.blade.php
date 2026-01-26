@@ -2,6 +2,37 @@
 
 @section('title', 'Mis Reservas')
 
+@section('modal')
+<div class="modal fade" id="deleteReservaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i> ¿Cancelar esta reserva?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5">Estás a punto de cancelar tu viaje a:</p>
+                <h4 class="text-primary fw-bold" id="reserva-destino-preview"></h4>
+                <p class="text-muted">Programado para el: <span id="reserva-fecha-preview" class="fw-bold"></span></p>
+                <div class="alert alert-light border mt-3 small text-muted">
+                    <i class="bi bi-info-circle me-1"></i> Esta acción liberará tu plaza y no se podrá deshacer.
+                </div>
+            </div>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">No, mantener reserva</button>
+                <form id="deleteReservaForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger px-4">Sí, cancelar viaje</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -68,13 +99,15 @@
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             
-                                            <form action="{{ route('reserva.destroy', $reserva->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Deseas cancelar esta reserva?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar reserva">
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteReservaModal"
+                                                    data-bs-id="{{ $reserva->id }}"
+                                                    data-bs-destino="{{ $reserva->vacacion->titulo }}"
+                                                    data-bs-fecha="{{ \Carbon\Carbon::parse($reserva->fecha_reserva)->format('d/m/Y') }}">
+                                                <i class="bi bi-x-circle me-1"></i> Cancelar Reserva
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -95,4 +128,29 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    const deleteReservaModal = document.getElementById('deleteReservaModal');
+    if (deleteReservaModal) {
+        deleteReservaModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-bs-id');
+            const destino = button.getAttribute('data-bs-destino');
+            const fecha = button.getAttribute('data-bs-fecha');
+            
+            deleteReservaModal.querySelector('#reserva-destino-preview').textContent = destino;
+            deleteReservaModal.querySelector('#reserva-fecha-preview').textContent = fecha;
+            
+            // LA CORRECCIÓN CLAVE:
+            // Construimos la URL usando la ruta base de la página actual para evitar el 404
+            const form = deleteReservaModal.querySelector('#deleteReservaForm');
+            const currentUrl = window.location.href.split('?')[0]; // Quitamos parámetros GET
+            
+            // Si la URL actual es .../reserva, solo añadimos el ID
+            form.action = `${currentUrl}/${id}`;
+        });
+    }
+</script>
 @endsection

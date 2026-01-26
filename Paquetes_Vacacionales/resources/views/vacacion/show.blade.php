@@ -2,6 +2,34 @@
 
 @section('title', $vacacion->titulo)
 
+@section('modal')
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>¿Confirmar borrado?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Estás a punto de eliminar el comentario:</p>
+                <blockquote class="blockquote fs-6 text-muted p-2 bg-light rounded">
+                    <span id="comment-text-preview"></span>
+                </blockquote>
+                <p class="mb-0 text-danger small fw-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteCommentForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Eliminar permanentemente</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row g-4">
@@ -58,7 +86,6 @@
                                 <div class="d-flex justify-content-between">
                                     <h6 class="fw-bold mb-0">{{ $comentari->user->name }}</h6>
                                     
-                                    {{-- Lógica de Gestión de Comentarios --}}
                                     <div class="d-flex gap-2">
                                         @auth
                                             @if(Auth::id() == $comentari->iduser)
@@ -68,13 +95,14 @@
                                             @endif
                                             
                                             @if(Auth::id() == $comentari->iduser || Auth::user()->rol == 'admin')
-                                                <form action="{{ route('comentario.destroy', $comentari) }}" method="POST" onsubmit="return confirm('¿Seguro que quieres borrar este comentario?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Eliminar">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger py-0 px-2" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteCommentModal"
+                                                        data-bs-id="{{ $comentari->id }}"
+                                                        data-bs-texto="{{ Str::limit($comentari->comentario, 30) }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             @endif
                                         @endauth
                                     </div>
@@ -84,19 +112,32 @@
                             </div>
                         </div>
                     @empty
-                        <p class="text-muted">Aún no hay comentarios sobre este destino. ¡Sé el primero!</p>
+                        <p class="text-muted">Aún no hay opiniones sobre este destino.</p>
                     @endforelse
 
+                    {{-- LÓGICA DE PUBLICACIÓN SEGÚN RESERVA --}}
                     @auth
-                        <form action="{{ route('comentario.store') }}" method="POST" class="mt-4 bg-light p-3 rounded">
-                            @csrf
-                            <input type="hidden" name="idvacacion" value="{{ $vacacion->id }}">
-                            <div class="mb-3">
-                                <label for="comentario" class="form-label fw-bold">Deja tu opinión</label>
-                                <textarea name="comentario" id="comentario" rows="3" class="form-control" placeholder="¿Qué te pareció este viaje?"></textarea>
+                        @if($usuarioHaReservado)
+                            <form action="{{ route('comentario.store') }}" method="POST" class="mt-4 bg-light p-3 rounded shadow-sm border">
+                                @csrf
+                                <input type="hidden" name="idvacacion" value="{{ $vacacion->id }}">
+                                <div class="mb-3">
+                                    <label for="comentario" class="form-label fw-bold">Cuéntanos tu experiencia</label>
+                                    <textarea name="comentario" id="comentario" rows="3" class="form-control" placeholder="¿Qué te pareció este viaje?"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">Publicar comentario</button>
+                            </form>
+                        @else
+                            <div class="alert alert-info mt-4 border-0 shadow-sm">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                Solo los viajeros que han reservado este destino pueden dejar un comentario.
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm">Publicar comentario</button>
-                        </form>
+                        @endif
+                    @else
+                        <div class="alert alert-secondary mt-4 border-0">
+                            <i class="bi bi-lock-fill me-2"></i>
+                            Debes iniciar sesión para comentar tus viajes reservados.
+                        </div>
                     @endauth
                 </div>
             </div>
@@ -144,4 +185,26 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteModal = document.getElementById('deleteCommentModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const id = button.getAttribute('data-bs-id');
+                const texto = button.getAttribute('data-bs-texto');
+                
+                const modalBodyPreview = deleteModal.querySelector('#comment-text-preview');
+                const form = deleteModal.querySelector('#deleteCommentForm');
+                
+                modalBodyPreview.textContent = texto;
+                // Construcción de ruta absoluta para evitar 404 en subcarpetas
+                form.action = "{{ url('comentario') }}/" + id;
+            });
+        }
+    });
+</script>
 @endsection

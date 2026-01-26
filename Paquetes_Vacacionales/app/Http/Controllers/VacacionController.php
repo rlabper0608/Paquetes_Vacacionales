@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\VacacionCreateRequest;
 use App\Models\Foto;
+use App\Models\Reserva;
 use App\Models\Tipo;
 use App\Models\Vacacion;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -61,13 +62,13 @@ class VacacionController extends Controller {
             //Construir la consulta paso a paso
             $query = Vacacion::query();
             
-            //Le unimos la tabla pelo para poder acceder a su nombre
+            //Le unimos la tabla tipo para poder acceder a su nombre
             $query ->join('tipo','vacacion.idtipo', '=', 'tipo.id');
             
             //Reemplazo el asterisco por los campos que quiero obtener
             $query->select('vacacion.*','tipo.nombre');
             
-            //Filtro idpelo
+            //Filtro idtipo
             if($idtipo != null){
                 $query->where('idtipo','=',$idtipo);
             }
@@ -87,8 +88,7 @@ class VacacionController extends Controller {
                     $subquery
                         ->where('vacacion.id', 'like', "%q%")
                         ->orWhere('vacacion.titulo', 'like', '%' . $q . '%')
-                        ->orWhere('peinado.idpelo', 'like', '%' . $q . '%')
-                        ->orWhere('vacacion.description', 'like', '%' . $q . '%')
+                        ->orWhere('vacacion.descripcion', 'like', '%' . $q . '%')
                         ->orWhere('vacacion.precio', 'like', '%' . $q . '%')
                         ->orWhere('tipo.nombre', 'like', '%' . $q . '%');
                 });
@@ -151,7 +151,14 @@ class VacacionController extends Controller {
     }
 
     public function show(Vacacion $vacacion): View {
-        return view('vacacion.show', ['vacacion'=>$vacacion]);
+        $reservas = Reserva::all();
+        $usuarioHaReservado = false;
+
+            $usuarioHaReservado = Reserva::where('iduser', auth()->id())
+                ->where('idvacacion', $vacacion->id)
+                ->exists();
+        
+        return view('vacacion.show', ['vacacion'=>$vacacion, 'usuarioHaReservado' => $usuarioHaReservado, 'reservas' => $reservas]);
     }
 
     public function edit(Vacacion $vacacion): View {
@@ -208,22 +215,41 @@ class VacacionController extends Controller {
 
     public function destroy(Vacacion $vacacion): RedirectResponse {
 
-        try{
-            $result = $vacacion->delete();
-            $mensajetxt='El paquete se ha eliminado correctamente';
-        }
-        catch(\Exception $e){
-            $result = false;
-            $mensajetxt='El paquete no se ha eliminado';
+       try {
+        // 1. Borrar archivos físicos de las fotos del disco
+        foreach ($vacacion->foto as $foto) {
+            if (Storage::disk('public')->exists($foto->ruta)) {
+                Storage::disk('public')->delete($foto->ruta);
+            }
         }
 
-        $mensaje = [
-            'mensajeTexto' => $mensajetxt,
-        ];
-        if($result){
-            return redirect()->route('main')->with($mensaje);
-        } else {
-            return back()->withInput()->withErrors($mensaje);
-        }
+        // 2. Borrar los registros hijos manualmente si no tienes "onDelete cascade"
+        $vacacion->foto()->delete();      // Borra registros en tabla fotos
+        $vacacion->comentario()->delete(); // Borra registros en tabla comentarios
+        $vacacion->reserva()->delete();    // Borra registros en tabla reservas (¡Cuidado aquí!)
+
+        // 3. Ahora sí, borrar el paquete vacacional
+        $result = $vacacion->delete();
+        $mensajetxt = 'El paquete y todos sus datos asociados se han eliminado correctamente';
+        
+    } catch (\Exception $e) {
+        $result = false;
+        // Agregamos el mensaje de error real para saber qué falla si sigue sin borrar
+        $mensajetxt = 'Error al eliminar: ' . $e->getMessage();
     }
+
+    $mensaje = ['mensajeTexto' => $mensajetxt];
+
+    if ($result) {
+        // Redirigimos a la lista de gestión, no al main, para ver el cambio
+        return redirect()->route('vacacion.lista')->with($mensaje);
+    } else {
+        return back()->withErrors($mensaje);
+    }
+    }
+
+    public function lista() {
+    $vacaciones = Vacacion::with('tipo')->get();
+    return view('vacacion.lista', ['vacaciones' => $vacaciones ]);
+}
 }

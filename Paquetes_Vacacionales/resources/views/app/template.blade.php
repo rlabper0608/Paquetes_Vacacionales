@@ -44,6 +44,7 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="{{ route('vacacion.create') }}">Nuevo Paquete</a></li>
+                                <li><a class="dropdown-item" href="{{ route('vacacion.lista') }}">Paquetes</a></li>
                                 <li><a class="dropdown-item" href="{{ route('tipo.index') }}">Categorías</a></li>
                                 @if(Auth::user()->rol == 'admin')
                                     <li><hr class="dropdown-divider"></li>
@@ -56,29 +57,47 @@
                 </ul>
 
                 <div class="d-flex align-items-center">
-                    <form class="d-none d-md-flex me-3" role="search">
-                        <input class="form-control form-control-sm me-2" type="search" placeholder="Buscar destino...">
+                    <form class="d-none d-md-flex me-3" role="search" method="get" action="{{ route('vacacion.index') }}">
+                        @foreach(request()->except(['page','q']) as $item => $value)
+                        <input type="hidden" name="{{ $item }}" value="{{ $value }}">
+                        @endforeach
+                        <input name="q" class="form-control form-control-sm me-2" type="search" value="{{ $q ?? '' }}" placeholder="Buscar destino..." aria-label="Search">
                         <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
                     </form>
 
-                    <ul class="navbar-nav ml-auto">
+                    <ul class="navbar-nav ms-auto align-items-center">
                         @guest
+                            <li class="nav-item me-2">
+                                {{-- Fondo blanco sólido para que resalte mucho --}}
+                                <a class="btn btn-light text-primary fw-bold px-3 shadow-sm" href="{{ route('login') }}">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+                                </a>
+                            </li>
                             <li class="nav-item">
-                                <a class="nav-link active btn btn-light text-primary px-3 btn-sm fw-bold" href="{{ route('login') }}">Entrar</a>
+                                {{-- Solo borde blanco: elegante y perfectamente legible sobre azul --}}
+                                <a class="btn btn-outline-light fw-bold px-3" href="{{ route('register') }}">
+                                    Registrarse
+                                </a>
                             </li>
                         @else
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">
                                     <i class="bi bi-person-circle"></i> {{ Auth::user()->name }}
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><span class="dropdown-item-text text-muted small text-uppercase">{{ Auth::user()->rol }}</span></li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><span class="dropdown-item-text text-muted small text-uppercase fw-bold">{{ Auth::user()->rol }}</span></li>
+                                    
+                                    <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                                    
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item text-danger" href="#" 
-                                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                            Cerrar Sesión
+                                        {{-- Enlace que dispara el formulario --}}
+                                        <a class="dropdown-item text-danger d-flex align-items-center" href="#" 
+                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="bi bi-power me-2"></i> Cerrar Sesión
                                         </a>
+
+                                        {{-- FORMULARIO NECESARIO (Añade esto) --}}
                                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                             @csrf
                                         </form>
@@ -113,6 +132,7 @@
             </div>
         @endif
 
+        @yield('modal')
         @yield('content')
     </main>
 

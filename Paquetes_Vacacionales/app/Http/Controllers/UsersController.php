@@ -112,4 +112,22 @@ class UsersController extends Controller {
             return back()->withErrors($mensaje);
         }
     }
+
+    public function editProfile() {
+        $user = auth()->user(); // Sacamos el usuario actual
+        return view('user.profile', ['user' => $user]);
+    }
+
+    public function updateProfile(Request $request) {
+        $user = auth()->user();
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($request->only('name', 'email'));
+
+        return back()->with('mensajeTexto', 'Perfil actualizado correctamente.');
+    }
 }
