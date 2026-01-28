@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReservaCreateRequest;
 use App\Models\Reserva;
 use App\Models\Vacacion;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -13,7 +14,8 @@ use Illuminate\View\View;
 
 class ReservaController extends Controller {
 
-    public function index(): View {
+    // Ver listado de reservas
+    function index(): View {
         if (Auth::user()->rol == 'admin') {
             $reservas = Reserva::with(['user', 'vacacion.foto'])->paginate(10);
         } else {
@@ -24,44 +26,50 @@ class ReservaController extends Controller {
         return view('reserva.index', ['reservas' => $reservas]);
     }
 
-    public function create(): View {
+    // Enviar a la creación de una reserva (no es necesario)
+    function create(): View {
         $vacaciones = Vacacion::all();
         return view('reserva.create', ['vacaciones' => $vacaciones]);
     }
 
-    public function store(Request $request) {
-        $reserva = new Reserva($request->all());
-        $reserva->iduser = auth()->id();
-        $result = false;
+    // Guardar una reserva en la base de datos
+    function store(ReservaCreateRequest $request) {
+    $reserva = new Reserva($request->all());
+    $reserva->iduser = auth()->id();
+    
+    $result = false;
 
-        try {
-            $result = $reserva->save();
-            $mensajetxt = "Reserva realizada";
-        } catch(UniqueConstraintViolationException $e) {
-            $mensajetxt = "Error: Ya existe esta reserva";
-        } catch (QueryException $e) {
-            $mensajetxt = "Error de datos";
-        } catch (\Exception $e) {
-            $mensajetxt = "Error fatal";
-        }
-
-        if ($result) {
-            return view('reserva.success', ['reserva'=>$reserva]);
-        } else {
-            return back()->withInput()->withErrors(['mensajeTexto' => $mensajetxt]);
-        }
+    try {
+        $result = $reserva->save();
+        $mensajetxt = "¡Reserva realizada con éxito!";
+    } catch(UniqueConstraintViolationException $e) {
+        $mensajetxt = "Error: Ya tienes una reserva para este destino en esa fecha.";
+    } catch (QueryException $e) {
+        $mensajetxt = "Error en la base de datos. Comprueba los campos.";
+    } catch (\Exception $e) {
+        $mensajetxt = "Ocurrió un error inesperado al procesar tu reserva.";
     }
 
-    public function show(Reserva $reserva): View {
+    if ($result) {
+        return view('reserva.success', ['reserva' => $reserva]);
+    } else {
+        return back()->withInput()->withErrors(['mensajeTexto' => $mensajetxt]);
+    }
+    }
+
+    // Ver una resreva de manera individual
+    function show(Reserva $reserva): View {
         return view('reserva.show', ['reserva' => $reserva]);
     }
 
-    public function edit(Reserva $reserva): View {
+    // Mandar a la edición de una reserva, no es necesario
+    function edit(Reserva $reserva): View {
         $vacaciones = Vacacion::all();
         return view('reserva.edit', ['reserva' => $reserva, 'vacaciones' => $vacaciones]);
     }
 
-    public function update(Request $request, Reserva $reserva): RedirectResponse {
+    // Guardar en la base de datos los cambios de una reserva
+    function update(Request $request, Reserva $reserva): RedirectResponse {
         $result = false;
         $reserva->fill($request->all());
 
@@ -80,7 +88,8 @@ class ReservaController extends Controller {
         }
     }
 
-    public function destroy(Reserva $reserva): RedirectResponse {
+    // Borrado de una reserva
+    function destroy(Reserva $reserva): RedirectResponse {
         try {
             $result = $reserva->delete();
             $mensajetxt = 'La reserva ha sido cancelada correctamente';

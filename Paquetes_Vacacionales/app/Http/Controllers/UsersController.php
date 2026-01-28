@@ -13,25 +13,28 @@ use Illuminate\Database\QueryException;
 class UsersController extends Controller {
     
     function __construct() {
-        // $this->middleware('admin'); 
+        $this->middleware('verified')->except(['show', 'edit', 'update', 'editProfile', 'updateProfile']);
     }
 
-    public function index(): View {
+    // Devolver listado de usuarios
+    function index(): View {
         $users = User::paginate(10);
         return view('user.index', ['users' => $users]);
     }
 
-    public function create(): View {
+    // Mandar al admin a la creacion del usuario
+    function create(): View {
         $roles = ['user', 'advanced', 'admin'];
         return view('user.create', ['roles'=> $roles]);
     }
 
-    public function store(Request $request): RedirectResponse {
+    // Guardamos el usuario que ha creado el admin
+    function store(Request $request): RedirectResponse {
         $user = new User($request->all()); 
         $result = false;
 
         try {
-            $user->password = Hash::make($request->password); // Cifrar contraseña
+            $user->password = Hash::make($request->password);
             $result = $user->save();
             $mensajetxt = "El usuario se ha creado correctamente";
         } catch(UniqueConstraintViolationException $e) {
@@ -51,7 +54,8 @@ class UsersController extends Controller {
         }
     }
 
-    public function show(User $user): View {
+    // Ver perfil del usuario
+    function show(User $user): View {
         // Intentamos buscar al usuario con sus relaciones
         $user = User::with(['reservas.vacacion.tipo', 'reservas.vacacion.fotos'])->find($id);
 
@@ -64,11 +68,13 @@ class UsersController extends Controller {
         return view('user.show', ['user' => $user]);
     }
 
-    public function edit(User $user): View {
+    // Mandar al formulario de edición del usuario al admin
+    function edit(User $user): View {
         return view('user.edit', ['user' => $user]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse {
+    // Actualizar la información editada en la base de datos por el admin
+    function update(Request $request, User $user): RedirectResponse {
         $result = false;
         
         $user->fill($request->all());
@@ -95,7 +101,8 @@ class UsersController extends Controller {
         }
     }
 
-    public function destroy(User $user): RedirectResponse {
+    // Borrar a un usuario
+    function destroy(User $user): RedirectResponse {
         try {
             $result = $user->delete();
             $mensajetxt = 'Usuario eliminado correctamente';
@@ -113,12 +120,14 @@ class UsersController extends Controller {
         }
     }
 
-    public function editProfile() {
-        $user = auth()->user(); // Sacamos el usuario actual
+    // Editar tu perfil, personal
+    function editProfile() {
+        $user = auth()->user();
         return view('user.profile', ['user' => $user]);
     }
 
-    public function updateProfile(Request $request) {
+    // Actualización de perfil, por el propio usuario
+    function updateProfile(Request $request) {
         $user = auth()->user();
         
         $request->validate([

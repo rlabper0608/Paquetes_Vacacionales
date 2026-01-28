@@ -29,10 +29,6 @@ class ComentarioCreateRequest extends FormRequest {
             'idvacacion.required'       => $required,
             'idvacacion.exists'         => 'El paquete vacacional no es válido.',
 
-            // Reglas de iduser
-            'iduser.required'           => $required,
-            'iduser.exists'             => 'El usuario no es valido',
-
             // Reglas de comentario
             'comentariorequired'             => $required,
             'comentario.min'                => $min,
@@ -42,7 +38,6 @@ class ComentarioCreateRequest extends FormRequest {
     public function rules(): array {
         return [
             'idvacacion'        => 'required|exists:vacacion,id',
-            'iduser'            => 'required|exists:users,id',
             'comentario'        => 'required|min:10',
         ];
     }

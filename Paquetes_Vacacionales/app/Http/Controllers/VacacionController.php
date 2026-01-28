@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+// Importación
 use App\Http\Requests\VacacionCreateRequest;
 use App\Models\Foto;
 use App\Models\Reserva;
@@ -12,6 +13,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
@@ -22,6 +24,7 @@ class VacacionController extends Controller {
         $this->middleware('verified')->except(['index', 'show']);
     }
 
+    // Funciones para la ayuda del filtrado
     function getField (?string $str): string {
         $values = [
             1 => 'vacacion.id',
@@ -49,9 +52,10 @@ class VacacionController extends Controller {
         return $result;
     }
 
-    public function index(Request $request): View {
+    function index(Request $request): View {
         $vacaciones = Vacacion::with(['tipo', 'foto']);
         
+        // Filtrado y ordenación
         $field = $this->getField($request->field);
         $order = $this->getOrder($request->order);
         $idtipo = $request->idtipo;
@@ -83,6 +87,7 @@ class VacacionController extends Controller {
                 $query->where('precio','<=',$hasta);
             }
 
+            // Filtro del search
             if($q != null) {
                 $query->where(function($subquery) use ($q) {
                     $subquery
@@ -94,8 +99,9 @@ class VacacionController extends Controller {
                 });
             }
         
-        
+        // Ordenación según los campos que hemos ido sacando antes
         $query->orderBy($field,$order);
+        // Paginación
         $vacaciones = $query->paginate(6)->withQueryString();
         $tipos = Tipo::all();
 
@@ -110,27 +116,58 @@ class VacacionController extends Controller {
             ]);
     }
 
-    public function create(): View {
+    // Función que te manda al formulario de creación de los paquetes vacacionales
+    function create(): View {
         $tipos = Tipo::all();
         return view('vacacion.create', ['tipos'=>$tipos]);
     }
 
-    public function store(VacacionCreateRequest $request): RedirectResponse {
-        $vacacion = new Vacacion($request->all());
-        $result = false;
-
+    // Guardamoas el paquete vacacional
+    function store(VacacionCreateRequest $request): RedirectResponse {
         try {
-            $result = $vacacion->save();
-            
+            $vacacion = new Vacacion($request->all());
+            $vacacion->save();
+
+            // 1. Si el usuario subió fotos manualmente, las guardamos
             if ($request->hasFile('fotos')) {
                 foreach ($request->file('fotos') as $file) {
                     $ruta = $file->store('fotos_vacaciones', 'public');
-                    // Crear registro en la tabla 'foto'
                     $vacacion->foto()->create(['ruta' => $ruta]);
                 }
+            } 
+            // 2. Si NO subió fotos, buscamos una en Unsplash automáticamente
+            else {
+                $accessKey = 'TU_ACCESS_KEY_DE_UNSPLASH'; // Consíguela en unsplash.com/developers
+                
+                $response = Http::get('https://api.unsplash.com/search/photos', [
+                    'query' => $vacacion->titulo, // Buscamos por el nombre del viaje
+                    'client_id' => $accessKey,
+                    'per_page' => 1,
+                    'orientation' => 'landscape'
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if (!empty($data['results'])) {
+                        $urlImagenExterna = $data['results'][0]['urls']['regular'];
+                        
+                        // Descargamos el contenido de la imagen
+                        $contenidoImagen = file_get_contents($urlImagenExterna);
+                        
+                        // Generamos un nombre único para el archivo
+                        $nombreArchivo = 'auto_' . Str::random(10) . '.jpg';
+                        $rutaDestino = 'fotos_vacaciones/' . $nombreArchivo;
+
+                        // Guardamos físicamente en el storage
+                        Storage::disk('public')->put($rutaDestino, $contenidoImagen);
+
+                        // Creamos el registro en la tabla 'foto'
+                        $vacacion->foto()->create(['ruta' => $rutaDestino]);
+                    }
+                }
             }
-            
-            $mensajetxt = "El paquete se ha añadido";
+
+            return redirect()->route('main')->with('mensajeTexto', 'Paquete creado con éxito (foto automática añadida)');
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Llave primaria";
         } catch (QueryException $e) {
@@ -150,7 +187,8 @@ class VacacionController extends Controller {
         }
     }
 
-    public function show(Vacacion $vacacion): View {
+    // Muestra cada paquete de manera individual
+    function show(Vacacion $vacacion): View {
         $reservas = Reserva::all();
         $usuarioHaReservado = false;
 
@@ -161,18 +199,20 @@ class VacacionController extends Controller {
         return view('vacacion.show', ['vacacion'=>$vacacion, 'usuarioHaReservado' => $usuarioHaReservado, 'reservas' => $reservas]);
     }
 
-    public function edit(Vacacion $vacacion): View {
+    // Nos manda al formulario de edición de un paquete individual
+    function edit(Vacacion $vacacion): View {
         $tipos = Tipo::all();
         return view('vacacion.edit', ['vacacion' => $vacacion, 'tipos' => $tipos]);
     }
 
-    public function update(Request $request, Vacacion $vacacion): RedirectResponse {
+    // Guardamos los cambios del edit en la base de datos
+    function update(Request $request, Vacacion $vacacion): RedirectResponse {
         $result = false;
 
         $vacacion->fill($request->all());
 
         try {
-            // Controlamos el borrado de fotos
+            // Controlamos el borrado de fotos, por si queremos quitar alguna
             if ($request->has('eliminar_fotos')) {
                 foreach ($request->eliminar_fotos as $fotoId) {
                     $foto = \App\Models\Foto::find($fotoId);
@@ -184,7 +224,8 @@ class VacacionController extends Controller {
                     }
                 }
             }
-            // Añade fotos nuevas
+
+            // Control de insertado de imagenes nuevas, no tenemos que aplastar las anteriores, ya que tenemos un carrusel de imagenes y podemos tener tantas como queramos
             if ($request->hasFile('fotos')) {
                 foreach ($request->file('fotos') as $file) {
                     $ruta = $file->store('fotos_vacaciones', 'public');
@@ -194,6 +235,8 @@ class VacacionController extends Controller {
 
             $result = $vacacion->save();
             $mensajetxt = "El paquete se ha actualizado correctamente.";
+
+            // Control de errores
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Llave primaria";
         } catch (QueryException $e) {
@@ -206,6 +249,7 @@ class VacacionController extends Controller {
             "mensajeTexto" => $mensajetxt,
         ];
 
+        // Redirección dependiendo del resultado
         if ($result) {
             return redirect() -> route('main')->with($mensaje);
         } else {
@@ -213,43 +257,48 @@ class VacacionController extends Controller {
         }
     }
 
-    public function destroy(Vacacion $vacacion): RedirectResponse {
+    // Borramos un paquete vacacional
+    function destroy(Vacacion $vacacion): RedirectResponse {
 
        try {
-        // 1. Borrar archivos físicos de las fotos del disco
-        foreach ($vacacion->foto as $foto) {
-            if (Storage::disk('public')->exists($foto->ruta)) {
-                Storage::disk('public')->delete($foto->ruta);
+            // Borrramos las imagenes de la carpeta del paquete que estamos borrando
+            foreach ($vacacion->foto as $foto) {
+                if (Storage::disk('public')->exists($foto->ruta)) {
+                    Storage::disk('public')->delete($foto->ruta);
+                }
             }
+
+            // Aqui lo que hacemos es borrar los registros referentes a todo este paquete vacacional
+            $vacacion->foto()->delete();      
+            $vacacion->comentario()->delete(); 
+            $vacacion->reserva()->delete();    
+
+            // Terminamos de borrar el paquete, una vez que hemos elimando todo lo relacionado con el 
+            $result = $vacacion->delete();
+            $mensajetxt = 'El paquete y todos sus datos asociados se han eliminado correctamente';
+            
+            // Recogemos los errores
+        } catch(UniqueConstraintViolationException $e) {
+            $mensajetxt = "Llave primaria";
+        } catch (QueryException $e) {
+            $mensajetxt = "Valor nulo";
+        } catch (\Exception $e) {
+            $mensajetxt = "Error fatal". $e->getMessage();
         }
 
-        // 2. Borrar los registros hijos manualmente si no tienes "onDelete cascade"
-        $vacacion->foto()->delete();      // Borra registros en tabla fotos
-        $vacacion->comentario()->delete(); // Borra registros en tabla comentarios
-        $vacacion->reserva()->delete();    // Borra registros en tabla reservas (¡Cuidado aquí!)
+        $mensaje = ['mensajeTexto' => $mensajetxt];
 
-        // 3. Ahora sí, borrar el paquete vacacional
-        $result = $vacacion->delete();
-        $mensajetxt = 'El paquete y todos sus datos asociados se han eliminado correctamente';
-        
-    } catch (\Exception $e) {
-        $result = false;
-        // Agregamos el mensaje de error real para saber qué falla si sigue sin borrar
-        $mensajetxt = 'Error al eliminar: ' . $e->getMessage();
+        // Redirección según el resultado
+        if ($result) {
+            return redirect()->route('vacacion.lista')->with($mensaje);
+        } else {
+            return back()->withErrors($mensaje);
+        }
     }
 
-    $mensaje = ['mensajeTexto' => $mensajetxt];
-
-    if ($result) {
-        // Redirigimos a la lista de gestión, no al main, para ver el cambio
-        return redirect()->route('vacacion.lista')->with($mensaje);
-    } else {
-        return back()->withErrors($mensaje);
+    // Función que nos devuelve la lista, para que el admin vea todos los paquetes 
+    function lista() {
+        $vacaciones = Vacacion::all();
+        return view('vacacion.lista', ['vacaciones' => $vacaciones ]);
     }
-    }
-
-    public function lista() {
-    $vacaciones = Vacacion::with('tipo')->get();
-    return view('vacacion.lista', ['vacaciones' => $vacaciones ]);
-}
 }

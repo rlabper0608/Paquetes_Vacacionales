@@ -4,13 +4,17 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Vacacion;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class VacacionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Obtenemos los IDs de los tipos para asignarlos por nombre
         $tipos = DB::table('tipo')->pluck('id', 'nombre')->toArray();
+        $accessKey = env('UNSPLASH_ACCESS_KEY');
 
         $destinos = [
             ['titulo' => 'Maldivas Luxury', 'tipo' => 'Playa', 'precio' => 1500],
@@ -46,16 +50,48 @@ class VacacionSeeder extends Seeder
             ['titulo' => 'Islas Griegas', 'tipo' => 'Playa', 'precio' => 850],
             ['titulo' => 'Everest Base Camp', 'tipo' => 'Aventura', 'precio' => 3500],
         ];
-
+        
         foreach ($destinos as $destino) {
-            DB::table('vacacion')->insert([
+            // 1. Crear el paquete vacacional
+            $vacacion = Vacacion::create([
                 'titulo'      => $destino['titulo'],
-                'descripcion' => 'Una experiencia increíble en ' . $destino['titulo'] . '. Disfruta de paisajes únicos, cultura local y la mejor gastronomía. Este paquete incluye guía y traslados.',
+                'descripcion' => 'Una experiencia increíble en ' . $destino['titulo'] . '.',
                 'precio'      => $destino['precio'],
                 'idtipo'      => $tipos[$destino['tipo']] ?? array_rand($tipos),
-                'created_at'  => now(),
-                'updated_at'  => now(),
             ]);
+
+            // 2. Pedir 3 fotos diferentes para alimentar el carrusel
+            $response = Http::get('https://api.unsplash.com/search/photos', [
+                'query' => $destino['titulo'],
+                'client_id' => env('UNSPLASH_ACCESS_KEY'),
+                'per_page' => 3,
+                'orientation' => 'landscape'
+            ]);
+
+            if ($response->successful()) {
+                $fotosApi = $response->json()['results'];
+                
+                foreach ($fotosApi as $index => $fotoData) {
+                    $urlImagen = $fotoData['urls']['regular'];
+                    
+                    // Descargar el contenido real de la imagen
+                    $imagenContenido = Http::get($urlImagen)->body();
+                    
+                    // Nombre de archivo con índice para no sobrescribir
+                    $nombreArchivo = 'seeder_' . Str::slug($destino['titulo']) . '_' . $index . '.jpg';
+                    $rutaCompleta = 'fotos_vacaciones/' . $nombreArchivo;
+
+                    // Guardar físicamente en el disco público
+                    Storage::disk('public')->put($rutaCompleta, $imagenContenido);
+
+                    // Crear el registro relacionado en la tabla fotos
+                    $vacacion->foto()->create(['ruta' => $rutaCompleta]);
+                }
+                $this->command->info("📸 Fotos descargadas para: " . $destino['titulo']);
+            } else {
+                // Esto te mostrará el error 403 actual hasta que cambies la Key
+                $this->command->error("Fallo API en " . $destino['titulo'] . ": " . $response->status());
+            }
         }
     }
 }

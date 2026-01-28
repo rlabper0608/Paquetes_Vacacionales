@@ -12,7 +12,7 @@
             <div class="card-body p-4">
                 <form action="{{ route('tipo.update', $tipo->id) }}" method="POST">
                     @csrf
-                    @method('PUT') {{-- Indica a Laravel que es una actualización --}}
+                    @method('PUT')
 
                     <div class="mb-4">
                         <label for="nombre" class="form-label fw-bold">Nombre de la Categoría</label>

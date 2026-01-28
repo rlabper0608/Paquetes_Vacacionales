@@ -34,7 +34,7 @@ class TipoCreateRequest extends FormRequest {
 
     public function rules(): array {
         return [
-            'nombre'    => 'required|unique|string|min:1|max:60',
+            'nombre'    => 'required|unique:tipo,nombre|string|min:1|max:60',
         ];
     }
 }

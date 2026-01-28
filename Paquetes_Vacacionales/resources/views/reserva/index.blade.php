@@ -142,13 +142,10 @@
             
             deleteReservaModal.querySelector('#reserva-destino-preview').textContent = destino;
             deleteReservaModal.querySelector('#reserva-fecha-preview').textContent = fecha;
-            
-            // LA CORRECCIÓN CLAVE:
-            // Construimos la URL usando la ruta base de la página actual para evitar el 404
+
             const form = deleteReservaModal.querySelector('#deleteReservaForm');
-            const currentUrl = window.location.href.split('?')[0]; // Quitamos parámetros GET
+            const currentUrl = window.location.href.split('?')[0]; 
             
-            // Si la URL actual es .../reserva, solo añadimos el ID
             form.action = `${currentUrl}/${id}`;
         });
     }

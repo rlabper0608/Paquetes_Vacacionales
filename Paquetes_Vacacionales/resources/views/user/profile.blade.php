@@ -8,7 +8,6 @@
                 <div class="card-header bg-white fw-bold">Mi Perfil</div>
                 <div class="card-body">
                     
-                    {{-- ESTADO DE VERIFICACIÓN --}}
                     <div class="alert {{ $user->email_verified_at ? 'alert-success' : 'alert-warning' }} d-flex align-items-center">
                         <i class="bi {{ $user->email_verified_at ? 'bi-patch-check-fill' : 'bi-exclamation-triangle-fill' }} me-2"></i>
                         <div>
@@ -24,7 +23,6 @@
                         </div>
                     </div>
 
-                    {{-- FORMULARIO DE EDICIÓN --}}
                     <form action="{{ route('user.profile.update') }}" method="POST">
                         @csrf
                         @method('PUT')

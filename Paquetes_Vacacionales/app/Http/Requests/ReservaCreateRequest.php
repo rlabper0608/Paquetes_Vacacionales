@@ -29,10 +29,6 @@ class ReservaCreateRequest extends FormRequest {
             'idvacacion.required'       => $required,
             'idvacacion.exists'         => 'El paquete vacacional no es válido.',
 
-            // Reglas de iduser
-            'iduser.required'           => $required,
-            'iduser.exists'             => 'El usuario no es valido',
-
             // Reglas de fecha_reserva
             'fecha_reserva.required'             => $required,
             'fecha_reserva.date'                => 'La fecha tiene que ser del tipo fecha',
@@ -42,7 +38,6 @@ class ReservaCreateRequest extends FormRequest {
     public function rules(): array {
         return [
             'idvacacion'        => 'required|exists:vacacion,id',
-            'iduser'            => 'required|exists:users,id',
             'fecha_reserva'     => 'required|date',
         ];
     }

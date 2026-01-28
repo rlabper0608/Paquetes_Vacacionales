@@ -2,13 +2,41 @@
 
 @section('title', 'Gestión de Usuarios')
 
+@section('modal')
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteUserModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-0">¿Estás seguro de que deseas eliminar al usuario <strong id="userNameToDelete"></strong>?</p>
+                <p class="text-muted small mt-2">Esta acción no se puede deshacer y el usuario perderá acceso inmediato al sistema.</p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteUserForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-person-x-fill me-1"></i> Eliminar Usuario
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-11">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="fw-bold"><i class="bi bi-people-fill text-primary"></i> Control de Usuarios</h2>
-                {{-- Opcional: Botón para crear usuario manualmente --}}
                 <a href="{{ route('user.create') }}" class="btn btn-primary">
                     <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
                 </a>
@@ -55,15 +83,16 @@
                                                 <i class="bi bi-shield-lock"></i>
                                             </a>
                                             
-                                            {{-- Evitar que el admin se borre a sí mismo --}}
                                             @if($user->id !== Auth::id())
-                                            <form action="{{ route('user.destroy', $user->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar a este usuario?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger btn-delete-user" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteUserModal"
+                                                        data-id="{{ $user->id }}"
+                                                        data-name="{{ $user->name }}"
+                                                        data-url="{{ route('user.destroy', $user->id) }}">
                                                     <i class="bi bi-person-x"></i>
                                                 </button>
-                                            </form>
                                             @endif
                                         </div>
                                     </td>
@@ -76,9 +105,36 @@
             </div>
             
             <div class="mt-4">
-                {{ $users->links() }} {{-- Paginación --}}
+                <!-- Paginación -->
+                {{ $users->links() }} 
             </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Seleccionamos todos los botones que abren el modal de borrado
+        const deleteButtons = document.querySelectorAll('.btn-delete-user');
+        const deleteForm = document.getElementById('deleteUserForm');
+        const nameSpan = document.getElementById('userNameToDelete');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Extraemos la info de los atributos data-
+                const userId = this.getAttribute('data-id');
+                const userName = this.getAttribute('data-name');
+                const deleteUrl = this.getAttribute('data-url');
+
+                // Inyectamos el nombre en el texto del modal
+                nameSpan.textContent = userName;
+
+                // Cambiamos el action del formulario para que apunte a la ruta correcta
+                deleteForm.setAttribute('action', deleteUrl);
+            });
+        });
+    });
+</script>
 @endsection

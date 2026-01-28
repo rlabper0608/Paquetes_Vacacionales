@@ -33,10 +33,8 @@
 @section('content')
 <div class="container">
     <div class="row g-4">
-        {{-- Columna Izquierda: Galería y Descripción --}}
         <div class="col-lg-8">
             <div class="card shadow-sm border-0 mb-4">
-                {{-- Carrusel de Fotos --}}
                 @if($vacacion->foto->count() > 0)
                     <div id="carouselVacacion" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
@@ -72,7 +70,6 @@
                 </div>
             </div>
 
-            {{-- Sección de Comentarios --}}
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
                     <h4 class="fw-bold mb-4"><i class="bi bi-chat-dots me-2"></i>Comentarios</h4>
@@ -120,6 +117,7 @@
                         @if($usuarioHaReservado)
                             <form action="{{ route('comentario.store') }}" method="POST" class="mt-4 bg-light p-3 rounded shadow-sm border">
                                 @csrf
+                                <input type="hidden" name="user_id" value="{{ Auth::id() }}">
                                 <input type="hidden" name="idvacacion" value="{{ $vacacion->id }}">
                                 <div class="mb-3">
                                     <label for="comentario" class="form-label fw-bold">Cuéntanos tu experiencia</label>

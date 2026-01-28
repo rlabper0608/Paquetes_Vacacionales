@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\FotoCreateRequest;
 use App\Models\Foto;
 use App\Models\Vacacion;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -13,17 +14,20 @@ use Illuminate\View\View;
 
 class FotoController extends Controller {
 
-    public function index(): View {
+    // Ver listado de las fotos (no es necesario)
+    function index(): View {
         $fotos = Foto::with('vacacion')->paginate(12);
         return view('foto.index', ['fotos' => $fotos]);
     }
 
-    public function create(): View {
+    // Mandar al formulario de creación de una foto (no es necesario)
+    function create(): View {
         $vacaciones = Vacacion::all();
         return view('foto.create', ['vacaciones' => $vacaciones]);
     }
 
-    public function store(Request $request): RedirectResponse {
+    // Guardar la fotografía 
+    function store(FotoCreateRequest $request): RedirectResponse {
         $foto = new Foto($request->all());
         $result = false;
 
@@ -55,16 +59,19 @@ class FotoController extends Controller {
         }
     }
 
-    public function show(Foto $foto): View {
+    // Ver una foto de manera individual (no es necesario)
+    function show(Foto $foto): View {
         return view('foto.show', ['foto' => $foto]);
     }
 
-    public function edit(Foto $foto): View {
+    // Mandar al formulario de edición de una foto (no es necesario)
+    function edit(Foto $foto): View {
         $vacaciones = Vacacion::all();
         return view('foto.edit', ['foto' => $foto, 'vacaciones' => $vacaciones]);
     }
 
-    public function update(Request $request, Foto $foto): RedirectResponse {
+    // Actualizar una imagen en la base de datos (no es necesario)
+    function update(Request $request, Foto $foto): RedirectResponse {
         $result = false;
 
         $foto->fill($request->all()); 
@@ -96,7 +103,8 @@ class FotoController extends Controller {
         }
     }
 
-    public function destroy(Foto $foto): RedirectResponse {
+    // Borrar una imagen
+    function destroy(Foto $foto): RedirectResponse {
         try {
             // Borrado físico antes del delete
             Storage::disk('public')->delete($foto->ruta);
