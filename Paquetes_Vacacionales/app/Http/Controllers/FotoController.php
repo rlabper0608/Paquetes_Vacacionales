@@ -14,6 +14,19 @@ use Illuminate\View\View;
 
 class FotoController extends Controller {
 
+    function __construct() {
+        $this->middleware('verified');
+
+        $this->middleware(function ($request, $next) {
+            if (in_array(auth()->user()->rol, ['admin', 'advanced'])) {
+                return $next($request);
+            }
+
+            return redirect()->route('vacacion.index')
+                ->withErrors(['mensajeTexto' => 'No tienes permiso para gestionar archivos de imagen.']);
+        });
+    }
+
     // Ver listado de las fotos (no es necesario)
     function index(): View {
         $fotos = Foto::with('vacacion')->paginate(12);

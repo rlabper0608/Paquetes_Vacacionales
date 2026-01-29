@@ -16,6 +16,7 @@ Route::get('dashboard', [UserController::class, 'dashboard'])->name('dashboard')
 
 Route::resource('comentario', ComentarioController::class);
 Route::resource('reserva', ReservaController::class);
+Route::get('/reservas', [ReservaController::class, 'reservas'])->name('reserva.reservas');
 Route::resource('vacacion', VacacionController::class);
 Route::get('/lista', [VacacionController::class, 'lista'])->name('vacacion.lista');
 Route::resource('tipo', TipoController::class);
@@ -30,6 +31,3 @@ Route::get('/home/edit', [HomeController::class, 'edit'])->name('home.edit');
 Route::put('/home', [HomeController::class, 'update'])->name('home.update');
 
 Auth::routes(['verify'=> true]);
-// Auth::routes();
-
-// Route::post('/reserva', [ReservaController::class, 'store'])->middleware(['auth', 'verified']);

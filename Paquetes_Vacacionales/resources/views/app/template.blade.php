@@ -46,6 +46,7 @@
                                 <li><a class="dropdown-item" href="{{ route('vacacion.create') }}">Nuevo Paquete</a></li>
                                 <li><a class="dropdown-item" href="{{ route('vacacion.lista') }}">Paquetes</a></li>
                                 <li><a class="dropdown-item" href="{{ route('tipo.index') }}">Categorías</a></li>
+                                <li><a class="dropdown-item" href="{{ route('reserva.reservas') }}">Reservas</a></li>
                                 @if(Auth::user()->rol == 'admin')
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ route('user.index') }}">Usuarios</a></li>

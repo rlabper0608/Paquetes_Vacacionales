@@ -12,6 +12,20 @@ use Illuminate\View\View;
 
 class TipoController extends Controller {
 
+    function __construct() {
+
+        $this->middleware('verified');
+
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->rol !== 'admin') {
+                return redirect()->route('vacacion.index')
+                    ->withErrors(['mensajeTexto' => 'No tienes permisos para gestionar los tipos de paquetes.']);
+            }
+
+            return $next($request);
+        });
+    }
+
     // Listado de los tipos
     function index(): View {
         $tipos = Tipo::all();

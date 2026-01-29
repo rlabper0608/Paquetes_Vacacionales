@@ -14,6 +14,20 @@ use Illuminate\View\View;
 
 class ReservaController extends Controller {
 
+    function __construct() {
+        $this->middleware('verified');
+
+        $this->middleware(function ($request, $next) {
+            if (auth()->check() && auth()->user()->rol === 'admin') {
+                // Nos deja pasar si soy el admin
+                return $next($request);
+            }
+
+            // Si no es admin, lo mandamos a la home con un error
+            return redirect('/')->withErrors(['mensajeTexto' => 'Acceso denegado. Solo administradores.']);
+        })->only(['reservas']);
+    }
+
     // Ver listado de reservas
     function index(): View {
         if (Auth::user()->rol == 'admin') {
@@ -34,27 +48,27 @@ class ReservaController extends Controller {
 
     // Guardar una reserva en la base de datos
     function store(ReservaCreateRequest $request) {
-    $reserva = new Reserva($request->all());
-    $reserva->iduser = auth()->id();
-    
-    $result = false;
+        $reserva = new Reserva($request->all());
+        $reserva->iduser = auth()->id();
+        
+        $result = false;
 
-    try {
-        $result = $reserva->save();
-        $mensajetxt = "¡Reserva realizada con éxito!";
-    } catch(UniqueConstraintViolationException $e) {
-        $mensajetxt = "Error: Ya tienes una reserva para este destino en esa fecha.";
-    } catch (QueryException $e) {
-        $mensajetxt = "Error en la base de datos. Comprueba los campos.";
-    } catch (\Exception $e) {
-        $mensajetxt = "Ocurrió un error inesperado al procesar tu reserva.";
-    }
+        try {
+            $result = $reserva->save();
+            $mensajetxt = "¡Reserva realizada con éxito!";
+        } catch(UniqueConstraintViolationException $e) {
+            $mensajetxt = "Error: Ya tienes una reserva para este destino en esa fecha.";
+        } catch (QueryException $e) {
+            $mensajetxt = "Error en la base de datos. Comprueba los campos.";
+        } catch (\Exception $e) {
+            $mensajetxt = "Ocurrió un error inesperado al procesar tu reserva.";
+        }
 
-    if ($result) {
-        return view('reserva.success', ['reserva' => $reserva]);
-    } else {
-        return back()->withInput()->withErrors(['mensajeTexto' => $mensajetxt]);
-    }
+        if ($result) {
+            return view('reserva.success', ['reserva' => $reserva]);
+        } else {
+            return back()->withInput()->withErrors(['mensajeTexto' => $mensajetxt]);
+        }
     }
 
     // Ver una resreva de manera individual
@@ -103,5 +117,10 @@ class ReservaController extends Controller {
         } else {
             return back()->withErrors(['mensajeTexto' => $mensajetxt]);
         }
+    }
+
+    function reservas(): View {
+        $reservas = Reserva::all();
+        return view ('reserva.reservas', ['reservas' => $reservas]);
     }
 }

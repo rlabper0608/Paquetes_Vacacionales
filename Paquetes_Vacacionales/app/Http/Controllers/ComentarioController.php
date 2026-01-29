@@ -15,6 +15,10 @@ use Illuminate\View\View;
 
 class ComentarioController extends Controller {
 
+    function __construct() {
+        $this->middleware('verified');
+    }
+
     // Vers listado de comentarios (no es necesario)
     function index(): View {
         $comentarios = Comentario::with(['usuario', 'vacacion'])->paginate(15);

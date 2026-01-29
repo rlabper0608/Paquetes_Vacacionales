@@ -22,6 +22,17 @@ class VacacionController extends Controller {
 
     function __construct() {
         $this->middleware('verified')->except(['index', 'show']);
+
+        // Vamos a hacer otra barrera por si el usuario esta verificado y se sabe la ruta de creación por ejemplo, para que solo el admin pueda acceder
+        $this->middleware(function ($request, $next) {
+            if (auth()->check() && auth()->user()->rol === 'admin') {
+                // Nos deja pasar si soy el admin
+                return $next($request);
+            }
+
+            // Si no es admin, lo mandamos a la home con un error
+            return redirect('/')->withErrors(['mensajeTexto' => 'Acceso denegado. Solo administradores.']);
+        })->except(['index', 'show']);
     }
 
     // Funciones para la ayuda del filtrado
