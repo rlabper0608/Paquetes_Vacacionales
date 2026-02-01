@@ -16,13 +16,15 @@ class TipoController extends Controller {
 
         $this->middleware('verified');
 
+        // Los usuarios tienen que estar verificados y ser admins para poder acceder a cualquier cosa relacionada con el tipo
         $this->middleware(function ($request, $next) {
-            if (auth()->user()->rol !== 'admin') {
-                return redirect()->route('vacacion.index')
-                    ->withErrors(['mensajeTexto' => 'No tienes permisos para gestionar los tipos de paquetes.']);
+            if (auth()->user()->rol == 'admin' || auth()->user()->rol == 'advanced') {
+                return $next($request);
+                
             }
 
-            return $next($request);
+            return redirect()->route('vacacion.index')
+                    ->withErrors(['mensajeTexto' => 'No tienes permisos para gestionar los tipos de paquetes.']);
         });
     }
 
@@ -39,12 +41,16 @@ class TipoController extends Controller {
 
     // Guardar un tipo en la base de datos
     function store(TipoCreateRequest $request): RedirectResponse {
+        // Creamos un nuevo tipo
         $tipo = new Tipo($request->all());
         $result = false;
 
         try {
+            // Los guardamis
             $result = $tipo->save();
             $mensajetxt = "La categoría se ha añadido correctamente";
+            
+            // Control de errores
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Error: Esa categoría ya existe (Llave primaria/única)";
         } catch (QueryException $e) {
@@ -78,11 +84,18 @@ class TipoController extends Controller {
     function update(Request $request, Tipo $tipo): RedirectResponse {
         $result = false;
 
-        $tipo->fill($request->all());
+        $datosValidados = $request->validate([
+            'nombre' => 'required|string|min:3|max:60|unique:tipos,nombre,' . $tipo->id
+        ]);
+
+        $tipo->fill($datosValidados);
 
         try {
+            // Guardamos el tipo
             $result = $tipo->save();
             $mensajetxt = "La categoría se ha actualizado correctamente.";
+
+            // Control de errores
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Error: El nombre ya está en uso";
         } catch (QueryException $e) {

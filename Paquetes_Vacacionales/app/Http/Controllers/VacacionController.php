@@ -21,11 +21,12 @@ use Illuminate\View\View;
 class VacacionController extends Controller {
 
     function __construct() {
+        // Los usuarios deben estar verificados para ver todas las paginas menos la del index y el show que la pueden ver todos
         $this->middleware('verified')->except(['index', 'show']);
 
         // Vamos a hacer otra barrera por si el usuario esta verificado y se sabe la ruta de creación por ejemplo, para que solo el admin pueda acceder
         $this->middleware(function ($request, $next) {
-            if (auth()->check() && auth()->user()->rol === 'admin') {
+            if (auth()->check() && auth()->user()->rol === 'admin' || auth()->user()->rol === 'advanced') {
                 // Nos deja pasar si soy el admin
                 return $next($request);
             }
@@ -64,7 +65,8 @@ class VacacionController extends Controller {
     }
 
     function index(Request $request): View {
-        $vacaciones = Vacacion::with(['tipo', 'foto']);
+        // Recogemos solo los paquetes que tengo un tipo asociado
+        $vacaciones = Vacacion::with(['tipo']);
         
         // Filtrado y ordenación
         $field = $this->getField($request->field);
@@ -135,6 +137,7 @@ class VacacionController extends Controller {
 
     // Guardamoas el paquete vacacional
     function store(VacacionCreateRequest $request): RedirectResponse {
+        $result = false;
         try {
             $vacacion = new Vacacion($request->all());
             $vacacion->save();
@@ -148,15 +151,17 @@ class VacacionController extends Controller {
             } 
             // 2. Si NO subió fotos, buscamos una en Unsplash automáticamente
             else {
-                $accessKey = 'TU_ACCESS_KEY_DE_UNSPLASH'; // Consíguela en unsplash.com/developers
+                $accessKey = 'TU_ACCESS_KEY_DE_UNSPLASH'; // Esta puesta en el .env
                 
+                // Recogemos la foto que tenga que ver con el titulo del paquete vacacional
                 $response = Http::get('https://api.unsplash.com/search/photos', [
                     'query' => $vacacion->titulo, // Buscamos por el nombre del viaje
                     'client_id' => $accessKey,
                     'per_page' => 1,
-                    'orientation' => 'landscape'
+                    'orientation' => 'landscape' // De esta forma no nos busca fotos verticales
                 ]);
 
+                // Si la busqueda ha ido de forma correcta empezamos con el guardado de las imagenes
                 if ($response->successful()) {
                     $data = $response->json();
                     if (!empty($data['results'])) {
@@ -177,8 +182,10 @@ class VacacionController extends Controller {
                     }
                 }
             }
+            $result = true;
+            $mensajetxt = 'Paquete creado con éxito';
 
-            return redirect()->route('main')->with('mensajeTexto', 'Paquete creado con éxito (foto automática añadida)');
+            // Recogemos los errores
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Llave primaria";
         } catch (QueryException $e) {
@@ -191,6 +198,7 @@ class VacacionController extends Controller {
             "mensajeTexto" => $mensajetxt,
         ];
 
+        // Redireccionamos al usuario segun sea el resultado del guardado
         if ($result) {
             return redirect() -> route('main')->with($mensaje);
         } else {
@@ -203,6 +211,7 @@ class VacacionController extends Controller {
         $reservas = Reserva::all();
         $usuarioHaReservado = false;
 
+        // Nos fijamos que el usuario solo pueda ver las reservas que ha realizado el mismo
             $usuarioHaReservado = Reserva::where('iduser', auth()->id())
                 ->where('idvacacion', $vacacion->id)
                 ->exists();
@@ -218,11 +227,20 @@ class VacacionController extends Controller {
 
     // Guardamos los cambios del edit en la base de datos
     function update(Request $request, Vacacion $vacacion): RedirectResponse {
+
+        $datosValidados = $request->validate([
+            'titulo'      => 'required|string|max:150',
+            'descripcion' => 'required|string|min:20',
+            'precio'      => 'required|numeric|min:0',
+            'idtipo'      => 'required|exists:tipos,id', 
+        ]);
+
         $result = false;
 
-        $vacacion->fill($request->all());
-
         try {
+            // Probamos a actualizar los datos validados
+            $vacacion->fill($datosValidados);
+
             // Controlamos el borrado de fotos, por si queremos quitar alguna
             if ($request->has('eliminar_fotos')) {
                 foreach ($request->eliminar_fotos as $fotoId) {

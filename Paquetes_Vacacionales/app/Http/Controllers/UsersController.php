@@ -30,13 +30,17 @@ class UsersController extends Controller {
 
     // Guardamos el usuario que ha creado el admin
     function store(Request $request): RedirectResponse {
+        // Creamos al usuario
         $user = new User($request->all()); 
         $result = false;
 
         try {
+            // Hasheamos su contraseña, y guardamos el usuario
             $user->password = Hash::make($request->password);
             $result = $user->save();
             $mensajetxt = "El usuario se ha creado correctamente";
+
+            // Control de errores
         } catch(UniqueConstraintViolationException $e) {
             $mensajetxt = "Error: El correo ya está registrado";
         } catch (QueryException $e) {
@@ -77,19 +81,42 @@ class UsersController extends Controller {
     function update(Request $request, User $user): RedirectResponse {
         $result = false;
         
-        $user->fill($request->all());
+        // Validamos los datos
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:8|confirmed', 
+            'rol'   => 'required'
+        ]);
 
         try {
+            // Guardamos los cambios de los datos validados
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->rol = $request->rol;
+
             // Solo actualizamos la contraseña si el admin ha escrito una nueva
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
 
+            if ($request->has('verified')) {
+                // Solo lo actualizamos si no estaba verificado ya (para no pisar la fecha original)
+                if ($user->email_verified_at == null) {
+                    $user->email_verified_at = now();
+                }
+            } else {
+                // Si el admin desmarca la casilla, quitamos la verificación
+                $user->email_verified_at = null;
+            }
+
             $result = $user->save();
             $mensajetxt = "Usuario actualizado correctamente";
+            
+            // Control de error, lo pasamos por mensaje para saber cual es el error.
         } catch (\Exception $e) {
             $result = false;
-            $mensajetxt = "No se pudo actualizar el usuario";
+            $mensajetxt = "No se pudo actualizar el usuario" .$e;
         }
 
         $mensaje = ["mensajeTexto" => $mensajetxt];

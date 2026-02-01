@@ -15,8 +15,7 @@ use Illuminate\View\View;
 class ReservaController extends Controller {
 
     function __construct() {
-        $this->middleware('verified');
-
+        // Solo el admin puede pasar a ver reservas, que es el listado de todas las reservas que se han realizado en la página
         $this->middleware(function ($request, $next) {
             if (auth()->check() && auth()->user()->rol === 'admin') {
                 // Nos deja pasar si soy el admin
@@ -30,13 +29,7 @@ class ReservaController extends Controller {
 
     // Ver listado de reservas
     function index(): View {
-        if (Auth::user()->rol == 'admin') {
-            $reservas = Reserva::with(['user', 'vacacion.foto'])->paginate(10);
-        } else {
-            $reservas = Reserva::where('iduser', Auth::id())
-                                ->with(['vacacion.foto'])
-                                ->paginate(10);
-        }
+        $reservas = Reserva::where('iduser', Auth::id())->paginate(10);
         return view('reserva.index', ['reservas' => $reservas]);
     }
 
@@ -76,13 +69,13 @@ class ReservaController extends Controller {
         return view('reserva.show', ['reserva' => $reserva]);
     }
 
-    // Mandar a la edición de una reserva, no es necesario
+    // Mandar a la edición de una reserva (no es necesario)
     function edit(Reserva $reserva): View {
         $vacaciones = Vacacion::all();
         return view('reserva.edit', ['reserva' => $reserva, 'vacaciones' => $vacaciones]);
     }
 
-    // Guardar en la base de datos los cambios de una reserva
+    // Guardar en la base de datos los cambios de una reserva (no es necesario)
     function update(Request $request, Reserva $reserva): RedirectResponse {
         $result = false;
         $reserva->fill($request->all());
@@ -119,6 +112,7 @@ class ReservaController extends Controller {
         }
     }
 
+    // Devuelve la lista de todas las reservas que se han realizado en la página
     function reservas(): View {
         $reservas = Reserva::all();
         return view ('reserva.reservas', ['reservas' => $reservas]);

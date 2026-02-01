@@ -32,17 +32,23 @@
     </div>
 </div>
 @endsection
-
 @section('content')
-<div class="container">
+<div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-11">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold">
-                    <i class="bi bi-calendar-check text-primary"></i> 
-                    {{ Auth::user()->rol == 'admin' ? 'Gestión Global de Reservas' : 'Mis Viajes Reservados' }}
+                <h2 class="fw-bold text-dark">
+                    <i class="bi bi-briefcase text-primary me-2"></i> Mis Viajes Reservados
                 </h2>
+                <span class="badge bg-primary rounded-pill">{{ $reservas->count() }} viajes</span>
             </div>
+
+            @if(session('mensajeTexto'))
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> {{ session('mensajeTexto') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0">
@@ -51,9 +57,6 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-4">Ref.</th>
-                                    @if(Auth::user()->rol == 'admin')
-                                        <th>Cliente</th>
-                                    @endif
                                     <th>Destino</th>
                                     <th>Fecha del Viaje</th>
                                     <th>Precio</th>
@@ -64,59 +67,62 @@
                                 @forelse($reservas as $reserva)
                                 <tr>
                                     <td class="ps-4 text-muted small">#RSV-{{ $reserva->id }}</td>
-                                    
-                                    @if(Auth::user()->rol == 'admin')
-                                        <td>
-                                            <div class="fw-bold">{{ $reserva->user->name }}</div>
-                                            <div class="small text-muted">{{ $reserva->user->email }}</div>
-                                        </td>
-                                    @endif
-
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($reserva->vacacion->foto->count() > 0)
+                                            @if($reserva->vacacion->foto && $reserva->vacacion->foto->count() > 0)
                                                 <img src="{{ asset('storage/' . $reserva->vacacion->foto->first()->ruta) }}" 
-                                                     class="rounded me-2" style="width: 50px; height: 40px; object-fit: cover;">
+                                                     class="rounded me-3 shadow-sm" style="width: 60px; height: 45px; object-fit: cover;">
+                                            @else
+                                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 45px;">
+                                                    <i class="bi bi-image text-muted"></i>
+                                                </div>
                                             @endif
-                                            <span class="fw-bold">{{ $reserva->vacacion->titulo }}</span>
+                                            <div>
+                                                <span class="d-block fw-bold">{{ $reserva->vacacion->titulo }}</span>
+                                                <small class="text-muted">{{ $reserva->vacacion->tipo->nombre ?? 'Vacación' }}</small>
+                                            </div>
                                         </div>
                                     </td>
                                     
                                     <td>
-                                        <span class="badge bg-light text-dark border">
-                                            <i class="bi bi-calendar3 me-1"></i>
+                                        <span class="badge bg-white text-dark border px-3 py-2">
+                                            <i class="bi bi-calendar3 me-2 text-primary"></i>
                                             {{ \Carbon\Carbon::parse($reserva->fecha_reserva)->format('d/m/Y') }}
                                         </span>
                                     </td>
 
-                                    <td class="fw-bold text-primary">
+                                    <td class="fw-bold text-dark">
                                         {{ number_format($reserva->vacacion->precio, 2) }}€
                                     </td>
 
                                     <td class="text-end pe-4">
-                                        <div class="btn-group">
-                                            <a href="{{ route('vacacion.show', $reserva->idvacacion) }}" class="btn btn-sm btn-outline-primary" title="Ver destino">
-                                                <i class="bi bi-eye"></i>
+                                        <div class="btn-group shadow-sm">
+                                            <a href="{{ route('vacacion.show', $reserva->idvacacion) }}" class="btn btn-sm btn-white border" title="Ver detalles">
+                                                <i class="bi bi-eye text-primary"></i>
                                             </a>
-                                            
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-danger" 
+                                                    class="btn btn-sm btn-white border text-danger" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#deleteReservaModal"
                                                     data-bs-id="{{ $reserva->id }}"
                                                     data-bs-destino="{{ $reserva->vacacion->titulo }}"
                                                     data-bs-fecha="{{ \Carbon\Carbon::parse($reserva->fecha_reserva)->format('d/m/Y') }}">
-                                                <i class="bi bi-x-circle me-1"></i> Cancelar Reserva
+                                                <i class="bi bi-trash3 me-1"></i> Cancelar
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="{{ Auth::user()->rol == 'admin' ? '6' : '5' }}" class="text-center py-5">
-                                        <i class="bi bi-luggage fs-1 text-muted d-block mb-3"></i>
-                                        <p class="text-muted">No hay ninguna reserva registrada.</p>
-                                        <a href="{{ route('vacacion.index') }}" class="btn btn-primary btn-sm">Explorar destinos</a>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="py-4">
+                                            <i class="bi bi-luggage-fill fs-1 text-light-emphasis d-block mb-3"></i>
+                                            <h4 class="text-muted">Aún no tienes viajes reservados</h4>
+                                            <p class="text-muted mb-4">¡Explora nuestros destinos y empieza tu aventura!</p>
+                                            <a href="{{ route('vacacion.index') }}" class="btn btn-primary px-4 rounded-pill">
+                                                <i class="bi bi-search me-2"></i>Buscar destinos
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforelse

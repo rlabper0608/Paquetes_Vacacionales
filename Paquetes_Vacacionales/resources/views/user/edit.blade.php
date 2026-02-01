@@ -49,9 +49,21 @@
                         <input type="hidden" name="rol" value="{{ $user->rol }}">
                     @endif
 
-                    <div class="mb-4">
-                        <label for="password" class="form-label fw-bold">Nueva Contraseña</label>
-                        <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" placeholder="Dejar en blanco para mantener la actual">
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-bold text-secondary">Nueva Contraseña</label>
+                        <input type="password" name="password" id="password" 
+                            class="form-control @error('password') is-invalid @enderror" 
+                            placeholder="Dejar en blanco para mantener la actual">
+                        @error('password')
+                            <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password_confirmation" class="form-label fw-bold text-secondary">Confirmar Nueva Contraseña</label>
+                        <input type="password" name="password_confirmation" id="password_confirmation" 
+                            class="form-control" 
+                            placeholder="Repite la nueva contraseña">
                     </div>
 
                     <div class="d-flex justify-content-between">
